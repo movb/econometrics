@@ -170,6 +170,43 @@ y_{i} = \beta_{1} +  \beta_{2}x_{i} + \epsilon_{i}
 <p><span class="math">\(\hat{\epsilon_{i}}\)</span> - это разница между фактическим наблюдением <span class="math">\(y_{i}\)</span> и прогнозом <span class="math">\(\hat{y_{i}}\)</span>.</p>
 <p>И, естесственно, возникает суммарная ошибка прогноза. Чтобы ошибки не компенсировали друг друга, возведем их в квадрат и посчитаем <em>сумму квадратов ошибок прогноза</em>:</p>
 <p><span class="math">\[Q(\hat{\beta_{1}}, \hat{\beta_{2}}) = \sum\limits_{i=1}^n \hat{\epsilon_{i}}^2 = \sum\limits_{i=1}^n (y_{i} - \hat{y_{i}})^2\]</span></p>
+<p>Суть МНК: возьмите в качестве оценок такие <span class="math">\(\hat{\beta_{1}}\)</span>, <span class="math">\(\hat{\beta_{2}}\)</span>, при которых сумма квадратов ошибок прогноза <span class="math">\(Q\)</span> минимальна.</p>
+</div>
+<div class="section level1">
+<h1>Примеры</h1>
+<div id="-1.---." class="section level2">
+<h2>Пример 1. Регрессия на константу.</h2>
+<pre class="r"><code># вес, кг
+y &lt;- c(60, 70, 80)
+# рост, см
+x &lt;- c(170, 170, 181)</code></pre>
+<p>Оценим 2 модели:</p>
+<p>M1: <span class="math">\(y_{i} = \beta + \epsilon_{i}\)</span></p>
+<p>M2: <span class="math">\(y_{i} = \beta_{1} + \beta_{2}x_{i}+\epsilon_{i}\)</span></p>
+<p>С помощью метода наименьших квадратов нам надо получить <span class="math">\(\hat{\beta}\)</span>, <span class="math">\(\hat{\beta_{1}}\)</span> и <span class="math">\(\hat{\beta_{2}}\)</span>. Первая модель предполагает, что вес не зависит от роста. Вторая модель, предполагает, что рост зависит от веса линейно.</p>
+<p>МНК - минимизировать величину RSS:</p>
+<p><span class="math">\[\min\sum\limits_{i=1}^n \hat{\epsilon_{i}}^2 = \min\sum\limits_{i=1}^n (y_{i} - \hat{y_{i}})^2\]</span></p>
+<p><strong>M1</strong>: <span class="math">\(\hat{y_{i}} = \hat{\epsilon}\)</span>, следовательно</p>
+<p><span class="math">\[\sum\limits_{i=1}^3 (y_{i} - \hat{y_{i}})^2 = \sum\limits_{i=1}^3 (y_{i} - \hat{\beta})^2 = Q(\hat{\beta}) = \sum\limits_{i=1}^3 (y_{i}^2 - 2y_{i}\hat{\beta} + \hat{\beta}^2) = 
+\sum\limits_{i=1}^3 y_{i}^2 - \sum\limits_{i=1}^3 2y_{i}\hat{\beta} + \sum\limits_{i=1}^3\hat{\beta}^2\]</span></p>
+<p><span class="math">\[\sum\limits_{i=1}^3\hat{\beta}^2 = 3\hat{\beta}^2\]</span> (В общем случае <span class="math">\(n\hat{\beta}^2)\)</span></p>
+<p><span class="math">\[\sum\limits_{i=1}^n 2y_{i}\hat{\beta} = 2\hat{\beta}\sum\limits_{i=1}^n y_{i}\]</span></p>
+<p><span class="math">\[Q(\hat{\beta}) = \sum\limits_{i=1}^n y_{i}^2 - 2\hat{\beta}\sum\limits_{i=1}^n y_{i} + n\hat{\beta}^2\]</span></p>
+<p><span class="math">\[Q'(\hat{\beta}) = - 2\sum\limits_{i=1}^n y_{i} + 2n\hat{\beta}\]</span></p>
+<p><span class="math">\[\hat{\beta} = \sum\limits_{i-1}^n \frac{y_{i}}{n} = \bar{y}\]</span></p>
+<p>Таким образом: <span class="math">\[\hat{\beta}_{МНК} = \frac{60+70+80}{3} = 70\]</span></p>
+</div>
+<div id="-2.--." class="section level2">
+<h2>Пример 2. Парная регрессия.</h2>
+<p>Заметим, что <span class="math">\[\frac{\sum\limits_{i=1}^n x_{i}}{n} = \bar{x}\]</span> Отсюда следует, что <span class="math">\[\sum\limits_{i=1}^n x_{i} = n\bar{x} = \sum\limits_{i=1}^n \bar{x}\]</span> и, <span class="math">\[\sum\limits_{i=1}^n (x_{i} - \bar{x}) = 0\]</span></p>
+<p><strong>M2</strong>: <span class="math">\(y_{i} = \hat{\beta_{1}} + \hat{\beta_{2}}x_{i}\)</span></p>
+<p><span class="math">\[RSS = \sum\limits_{i=1}^n (y_{i} - \hat{y_{i}})^2 = \sum\limits_{i=1}^n (y_{i} - \hat{\beta_{1}} - \hat{\beta_{2}}x_{i})^2 = Q(\hat{\beta_{1}}, \hat{\beta_{2}})\]</span></p>
+<!-- TODO/IMPL дифференцирование Q -->
+<p>Получаем: <span class="math">\[\hat{\beta_{1}} = \bar{y} - \hat{\beta_{2}}\bar{x}\]</span> <span class="math">\[\hat{\beta_{2}} = \frac{\sum\limits_{i=1}^n (y_{i} - \bar{y})(x_{i}-\bar{x})}{\sum\limits_{i=1}^n (x_{i}-\bar{x})^2}\]</span></p>
+<pre class="r"><code>beta2 = sum((y - mean(y))*(x - mean(x)))/sum((x-mean(x))^2)
+beta1 = mean(y) - beta2*mean(x)</code></pre>
+<p>Получили, <span class="math">\(\hat{\beta_{1}} = -166.8181818\)</span> и <span class="math">\(\hat{\beta_{2}} = 1.3636364\)</span></p>
+</div>
 </div>
 
 

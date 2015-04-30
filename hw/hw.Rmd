@@ -1,0 +1,78 @@
+---
+title: "Home Work"
+author: "Mikhail Plekhanov"
+date: "Thursday, April 30, 2015"
+output: html_document
+---
+
+В данной домашней работе нам необходимо построить модель для оценки заработной платы  респондентов.
+
+В качестве дополнительных переменных я использовал количество подчиненных (rj6.0 в исходных данных) и стаж работы (rj5a). Мне кажется эти переменные должны влиять на уровень зароботной платы, так как количество подчиненных повышает ответственность, а стаж работы на некоторых предприятиях является определяющим фактором для расчета заработной платы (например, врачи, учителя, чиновники, полийеские и т.д.).
+
+```{r, echo=FALSE}
+library("memisc")
+library("dplyr")
+library("lmtest")
+library("sjPlot")
+library("sgof")
+library("ggplot2")
+library("foreign")
+library("car")
+library("hexbin")
+library("rlms")
+library("devtools")
+library("psych")
+```
+
+Подготовка данных.
+
+```{r}
+h <- read.rlms("r22i_os25a.sav")
+# rj13.2 - ЗП
+# rh6 - год рождения
+# rh5 - пол
+# r_diplom - образование
+# rj5a - с какого года работаете
+# rj6.0 - количество подчиненных
+data <- select(h, rj13.2, rh6, rh5, r_diplom, rj6.0, rj5a)
+data <- mutate(data, age = 2013 - rh6, experience = 2013 - rj5a)
+data <- rename(data, wage=rj13.2, sex=rh5, subordinates=rj6.0, education=r_diplom)
+data <- filter(data, education != "ЗАТРУДНЯЮСЬ ОТВЕТИТЬ", education != "ОТКАЗ ОТ ОТВЕТА", education!="НЕТ ОТВЕТА")
+
+levels(data$education) <- factor(data$education)
+levels(data$education) <- c("_no_school", "_special", 
+                            "_school", "_no_school",
+                            "_no_school", "_high")
+
+dummy <- model.matrix( ~ education-1, data=data)
+data$education_no_school<-dummy[,1]
+data$education_special<-dummy[,2]
+data$education_school<-dummy[,3]
+data$education_high<-dummy[,4]
+
+data <- select(data, wage, age, sex, education_no_school,
+               education_school, education_special,
+               education_high, subordinates, experience)
+```
+
+Описательные статистики переменных:
+
+```{r}
+describe(data)
+```
+
+Гистограммы доходов и возраста респондентов:
+
+```{r}
+qplot(data=data, wage,xlab="Заработная плата", ylab="Количество", main="Распределение заработной платы")
+qplot(data=data, age, xlab="Возраст", ylab="Количество", main="Распределение возраста респондентов")
+```
+
+Модель
+```{r}
+model1 = lm(data=data,wage~age+sex+education_school+education_special+education_high+
+              subordinates+experience)
+summary(model1)
+```
+
+Из этих данных мы видим, что на уровне значимости 5% значимыми оказались возраст, пол, обучение в школе, наличие подчиненных и стаж работы. Оказалось что возраст отрицательно сказывается на ЗП. Если пол женский, то это также сильно сказывается на заработной плате. Стаж работы тоже почему-то отрицательно влияет на ЗП, возможно потому-что коррелирует с возрастом респондента. Положительно на ЗП влияют образование в школе и наличие подчиненных.
